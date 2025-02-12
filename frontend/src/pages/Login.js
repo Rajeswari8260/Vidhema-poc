@@ -20,19 +20,21 @@ function Login() {
     //     }
     // };
      
-    const handleLogin = async () => {
+    const handleLogin = async () => { 
         try {
-            const response = await login(email, password); // Call login API
-            if (response.access) {  // JWT token should be in response
-                localStorage.setItem("token", response.access);  // Store token
+            const response = await login(email, password);  // Call login API
+            console.log("API Response:", response);
+    
+            if (response.data && response.data.access) {  // Check if token exists
+                localStorage.setItem("token", response.data.access);  // Store token
                 alert("Login successful!");
-                navigate("/dashboard");  // Redirect user
+                navigate("/userpage");  // Redirect user
             } else {
                 alert("Login failed. Please check your credentials.");
             }
         } catch (error) {
-            console.error("Login error:", error.message);
-            alert(error.message || "Login failed. Please check your credentials.");
+            console.error("Login error:", error.response ? error.response.data : error.message);
+            alert(error.response?.data?.error || "Login failed. Please check your credentials.");
         }
     };
     

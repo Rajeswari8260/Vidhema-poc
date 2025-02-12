@@ -15,7 +15,7 @@ function Signup() {
         try {
             await signup({ username, email, password, phone_number: phone, address });
             alert("Signup successful! Please log in.");
-            navigate("/login");
+            navigate("/");
         } catch (error) {
             console.error("Signup error:", error.response?.data || error.message);
             alert("Signup failed: " + (error.response?.data?.error || "Check console for details."));

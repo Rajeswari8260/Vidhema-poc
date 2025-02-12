@@ -10,6 +10,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class SignupView(APIView):
     def post(self, request):
@@ -20,52 +22,51 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+User = get_user_model()    
+
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
-    # def post(self, request):
-    #     email = request.data.get("email")
-    #     password = request.data.get("password")
-    #     user = authenticate(username=email, password=password)
-
-    #     if user is not None:
-    #         refresh = RefreshToken.for_user(user)
-    #         return Response({
-    #             "access": str(refresh.access_token),
-    #             "refresh": str(refresh),
-    #             "message": "Login successful"
-    #         }, status=status.HTTP_200_OK)
-
-    #     return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-    # class LoginView(APIView):
-    def post(self, request):
-        email = request.data.get("email")
+   def post(self, request):
+        email = request.data.get("email").lower()
         password = request.data.get("password")
-        # user = authenticate(username=email, password=password)
 
-        # if user is not None:
-        #     refresh = RefreshToken.for_user(user)
-        #     return Response({
-        #         "access": str(refresh.access_token),
-        #         "refresh": str(refresh),
-        #         "message": "Login successful"
-        #     }, status=status.HTTP_200_OK)
+        print(f"🔍 Debug: Attempting login for email: {email}")
 
-        # return JsonResponse({"error": "Invalid credentials"}, status=401)
-        User = get_user_model()  # Get the custom user model
+        # Print all users to confirm Django is seeing them
+        print("🔍 Debug: Listing all users in database...")
+        users = CustomUser.objects.all()
+        for user in users:
+            print(f"User: {user.username}, Email: {user.email}")
 
         try:
-            user = User.objects.get(email=email)  # Fetch user by email
-            user = authenticate(username=user.username, password=password)  # Authenticate using username
+            user = CustomUser.objects.get(email=email)
+            print(f"✅ Debug: User found: {user.username}")
 
-            if user is not None:
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                    "message": "Login successful"
-                }, status=status.HTTP_200_OK)
+            if not user.check_password(password):
+                print("❌ Debug: Password mismatch!")
+                return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            return JsonResponse({"error": "Invalid credentials"}, status=401)
+        except CustomUser.DoesNotExist:
+            print("❌ Debug: User not found!")
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        except User.DoesNotExist:
-            return JsonResponse({"error": "User not found"}, status=404)
+        print("🎉 Debug: Login successful!")
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "message": "Login successful"
+        }, status=status.HTTP_200_OK)
+   
+class UserDetailView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "username": user.username,
+            "email": user.email,
+            "phone_number": user.phone_number,
+            "address": user.address
+        }) 

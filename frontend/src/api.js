@@ -10,10 +10,12 @@ export const login = async (email, password) => {
     return await axios.post(`${API_URL}login/`, { email, password });
 };
 
-export const forgotPassword = async (email, password) => {
-    return await axios.post(`${API_URL}login/`, { email, password });
+export const getUserDetails = async (token) => {
+    return await axios.get(`${API_URL}user/`, {
+        headers: { Authorization: `Bearer ${token}`},
+    });
 };
 
-export const userpage = async (email, password) => {
-    return await axios.post(`${API_URL}login/`, { email, password });
-};
+// export const userpage = async (email, password) => {
+//     return await axios.post(`${API_URL}login/`, { email, password });
+// };
